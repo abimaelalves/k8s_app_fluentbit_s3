@@ -9,24 +9,22 @@ Este repositório contém a configuração para rodar um ambiente com **Kind (Ku
 ```plaintext
 k8s_app_fluentbit_s3/
 ├── app/
-│   ├── app.py                   # Código da aplicação
-│   ├── Dockerfile                # Dockerfile da aplicação
+│   ├── app.py                          # Código da aplicação que gera logs
+│   ├── Dockerfile                       # Dockerfile da aplicação
 │
 ├── k8s/
-│   ├── deployment.yaml           # Deployment da aplicação no Kubernetes
-│   ├── Dockerfile                # Dockerfile do Fluent Bit
-│   ├── fluent-bit-configmap.yaml # Configuração do Fluent Bit
-│   ├── fluent-bit-deployment.yaml # Deployment do Fluent Bit
-│   ├── kind.yaml                 # Configuração do cluster Kind
-│   ├── log_generator.py          # Script gerador de logs
-│   ├── check-fluentbit-cronjob.yaml # CronJob para monitorar os logs e reiniciar Fluent Bit se necessário
-│   ├── fluentbit-rbac.yaml       # Permissões RBAC para o CronJob
+│   ├── check-fluentbit-cronjob.yaml     # CronJob para monitorar logs e reiniciar Fluent Bit se necessário
+│   ├── deployment.yaml                   # Deployment da aplicação no Kubernetes
+│   ├── fluent-bit-configmap.yaml         # Configuração do Fluent Bit (ConfigMap)
+│   ├── fluent-bit-deployment.yaml        # Deployment do Fluent Bit no Kubernetes
+│   ├── fluentbit-rbac.yaml               # Permissões RBAC para o CronJob e Fluent Bit
+│   ├── kind.yaml                         # Configuração do cluster Kind com 1 master e 2 workers
 │
 ├── localstack/
-│   ├── volume/                   # Diretório de volume persistente
+│   ├── volume/                           # Diretório persistente do LocalStack
 │
-├── docker-compose.yml            # Docker Compose do LocalStack
-└── README.md                     # Documentação do projeto
+├── docker-compose.yml                   # Docker Compose para rodar o LocalStack
+├── README.md                            # Documentação com passo a passo da configuração
 ```
 
 ---
@@ -49,27 +47,6 @@ kubectl get nodes
 
 ### **Passo 2: Subir o LocalStack com Docker Compose**
 O LocalStack será responsável por simular os serviços da AWS (S3, SQS, SNS).
-
-Atualize seu `docker-compose.yml` para garantir que o LocalStack possa ser acessado pelo Kubernetes:
-
-```yaml
-version: "3.8"
-services:
-  localstack:
-    container_name: "localstack-main"
-    image: localstack/localstack
-    network_mode: "bridge"  # Permite comunicação com o Kind
-    ports:
-      - "4566:4566"
-      - "4510-4559:4510-4559"
-    environment:
-      - DEBUG=0
-      - SERVICES=s3,sqs,sns
-      - HOSTNAME_EXTERNAL=host.docker.internal  # Permite que o Kubernetes acesse via host.docker.internal
-    volumes:
-      - "./localstack/volume:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-```
 
 Suba o LocalStack:
 

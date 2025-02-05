@@ -1,7 +1,11 @@
-FROM python:3.11-slim
+# 📌 Usa a imagem base Python 3.11 minimalista para reduzir o tamanho do container
+FROM python:3.11-slim  
 
-WORKDIR /app
+# 📌 Define o diretório de trabalho dentro do container
+WORKDIR /app  
 
-COPY app.py .
+# 📌 Copia o arquivo da aplicação para dentro do container
+COPY app.py .  
 
-CMD ["python", "app.py"]
+# 📌 Comando que será executado ao iniciar o container (roda a aplicação)
+CMD ["python", "app.py"]  

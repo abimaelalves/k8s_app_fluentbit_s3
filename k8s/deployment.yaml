@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: log-generator
+  name: log-generator  # Nome do deployment
   labels:
-    app: log-generator
+    app: log-generator  # Rótulo (label) para identificar o deployment
 spec:
-  replicas: 2
+  replicas: 2  # Número de réplicas da aplicação (2 pods rodando simultaneamente)
   selector:
     matchLabels:
-      app: log-generator
+      app: log-generator  # Define os pods que pertencem a este deployment
   template:
     metadata:
       labels:
-        app: log-generator
+        app: log-generator  # Rótulo para os pods gerados por este deployment
     spec:
       containers:
         - name: log-generator
-          image: abimasantos/log-generator:latest  # Imagem do DockerHub
-          imagePullPolicy: Always  # Sempre puxar a versão mais recente
+          image: abimasantos/log-generator:latest  # Imagem do DockerHub que será utilizada
+          imagePullPolicy: Always  # Sempre puxar a versão mais recente da imagem ao iniciar os pods

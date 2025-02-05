@@ -1,51 +1,57 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: fluent-bit-config
-  namespace: default
+  name: fluent-bit-config  # Nome do ConfigMap
+  namespace: default       # Namespace onde será aplicado
 data:
   fluent-bit.conf: |
+    # Configuração global do Fluent Bit
     [SERVICE]
-        Flush         1
-        Log_Level     info
-        Parsers_File  parsers.conf
+        Flush         1             # Envia os logs a cada 1 segundo
+        Log_Level     info          # Define o nível de log como "info"
+        Parsers_File  parsers.conf  # Arquivo com os parsers personalizados
 
+    # Configuração de entrada (captura os logs da aplicação)
     [INPUT]
-        Name          tail
-        Path          /var/log/containers/log-generator-*.log
-        Tag          kube.*
-        Parser       docker
-        Mem_Buf_Limit 5MB
-        Skip_Long_Lines On
+        Name          tail                          # Usa o input "tail" para monitorar arquivos de log
+        Path          /var/log/containers/log-generator-*.log  # Caminho dos logs dos containers "log-generator"
+        Tag           kube.*                        # Define um tag para os logs capturados
+        Parser       docker                        # Usa o parser "docker" para interpretar os logs
+        Mem_Buf_Limit 5MB                          # Define um limite de 5MB de buffer na memória antes de enviar
+        Skip_Long_Lines On                         # Ignora linhas de log muito longas para evitar falhas
 
+    # Filtro para adicionar metadados do Kubernetes nos logs
     [FILTER]
-        Name          kubernetes
-        Match         kube.*
-        Kube_URL      https://kubernetes.default.svc:443
-        Merge_Log     On
-        Keep_Log      Off
+        Name          kubernetes                    # Usa o filtro Kubernetes
+        Match         kube.*                        # Aplica o filtro aos logs que correspondem à tag "kube.*"
+        Kube_URL      https://kubernetes.default.svc:443  # URL do API Server do Kubernetes
+        Merge_Log     On                            # Mescla os logs estruturados do Kubernetes
+        Keep_Log      Off                           # Remove o log original após a mesclagem
 
+    # Filtro para remover o campo "stream" dos logs (evita duplicação)
     [FILTER]
-        Name          modify
-        Match         kube.*
-        Remove        stream
+        Name          modify   # Usa o filtro modify
+        Match         kube.*   # Aplica o filtro aos logs que correspondem à tag "kube.*"
+        Remove        stream   # Remove o campo "stream" (evita logs duplicados)
 
+    # Configuração de saída (envia os logs para o S3 no LocalStack)
     [OUTPUT]
-        Name              s3
-        Match             *
-        Bucket            log-bucket
-        Region            us-east-1
-        Endpoint          http://host.docker.internal:4566
-        Storage_Class     STANDARD
-        Auto_Retry_Requests On
-        Use_Put_Object    On
-        Content_Type      application/json
-        S3_Key_Format     /logs/%Y/%m/%d/log-$UUID.log
-        Compression       gzip
+        Name              s3                          # Define que os logs serão enviados para o S3
+        Match             *                           # Envia todos os logs capturados
+        Bucket            log-bucket                  # Nome do bucket S3 onde os logs serão armazenados
+        Region            us-east-1                   # Define a região (mesmo sendo LocalStack, precisa de um valor)
+        Endpoint          http://host.docker.internal:4566  # Endereço do LocalStack no Docker Desktop
+        Storage_Class     STANDARD                    # Define a classe de armazenamento S3
+        Auto_Retry_Requests On                        # Ativa tentativas automáticas de reenvio em caso de falha
+        Use_Put_Object    On                          # Usa `PutObject` em vez de multipart upload para compatibilidade com LocalStack
+        Content_Type      application/json            # Define o tipo de conteúdo como JSON
+        S3_Key_Format     /logs/%Y/%m/%d/log-$UUID.log  # Define o formato do nome dos arquivos no S3 (com UUID único)
+        Compression       gzip                         # Compacta os logs antes de enviar para economizar espaço
 
+  # Configuração do parser para interpretar os logs no formato JSON do Docker
   parsers.conf: |
     [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Name        docker                     # Nome do parser
+        Format      json                       # Define que os logs estão no formato JSON
+        Time_Key    time                       # Define a chave que contém o timestamp
+        Time_Format %Y-%m-%dT%H:%M:%S.%L       # Define o formato do timestamp (ISO8601 com milissegundos)

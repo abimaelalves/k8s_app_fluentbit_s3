@@ -1,7 +1,9 @@
-# three node (two workers) cluster config
+# 📌 Define a configuração do cluster Kind
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+
+# 📌 Define os nós do cluster
 nodes:
-- role: control-plane
-- role: worker
-- role: worker
+- role: control-plane  # Define um nó como Control Plane (gerencia o cluster)
+- role: worker         # Define um nó como Worker (executa workloads como pods)
+- role: worker         # Define um segundo nó Worker para balanceamento de carga

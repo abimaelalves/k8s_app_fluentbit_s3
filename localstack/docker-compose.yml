@@ -1,17 +1,20 @@
-version: "3.8"
+version: "3.8"  # Define a versão do Docker Compose
 
 services:
   localstack:
-    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
-    image: localstack/localstack
-    network_mode: "bridge"  # Permite comunicação entre containers
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"  # Nome do container, podendo ser sobrescrito por uma variável de ambiente
+    image: localstack/localstack  # Imagem oficial do LocalStack no DockerHub
+    network_mode: "bridge"  # Usa modo de rede "bridge" para permitir comunicação entre containers
+
     ports:
-      - "4566:4566"  # LocalStack Gateway
-      - "4510-4559:4510-4559"  # External services port range
+      - "4566:4566"  # Porta principal do LocalStack para acessar os serviços simulados da AWS
+      - "4510-4559:4510-4559"  # Faixa de portas usadas para serviços específicos
+
     environment:
-      - DEBUG=${DEBUG:-0}
-      - SERVICES=s3,sqs,sns
-      - HOSTNAME_EXTERNAL=host.docker.internal  # Permite que Kubernetes acesse via host.docker.internal
+      - DEBUG=${DEBUG:-0}  # Habilita ou desabilita logs detalhados no LocalStack (0 = desligado, 1 = ligado)
+      - SERVICES=s3,sqs,sns  # Define quais serviços da AWS serão simulados (S3, SQS e SNS)
+      - HOSTNAME_EXTERNAL=host.docker.internal  # Permite que o Kubernetes (Kind) acesse o LocalStack via `host.docker.internal`
+
     volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"  # Diretório persistente para os dados do LocalStack
+      - "/var/run/docker.sock:/var/run/docker.sock"  # Permite que o LocalStack gerencie containers do Docker diretamente

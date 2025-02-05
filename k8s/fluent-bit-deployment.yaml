@@ -1,37 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fluent-bit
-  namespace: default
+  name: fluent-bit  # Nome do deployment
+  namespace: default  # Namespace onde o Fluent Bit será implantado
 spec:
-  replicas: 1
+  replicas: 1  # Apenas uma instância do Fluent Bit rodando
   selector:
     matchLabels:
-      app: fluent-bit
+      app: fluent-bit  # Define os pods pertencentes a este deployment
   template:
     metadata:
       labels:
-        app: fluent-bit
+        app: fluent-bit  # Rótulo para identificar os pods do Fluent Bit
     spec:
       containers:
         - name: fluent-bit
-          image: fluent/fluent-bit:latest
+          image: fluent/fluent-bit:latest  # Imagem do Fluent Bit mais recente no DockerHub
           volumeMounts:
             - name: varlog
-              mountPath: /var/log
+              mountPath: /var/log  # Monta os logs do host dentro do pod para coleta
             - name: config-volume
-              mountPath: /fluent-bit/etc/
+              mountPath: /fluent-bit/etc/  # Monta a configuração do Fluent Bit a partir do ConfigMap
           env:
             - name: AWS_ACCESS_KEY_ID
-              value: "test"
+              value: "test"  # Credencial fictícia para LocalStack (não usada na AWS real)
             - name: AWS_SECRET_ACCESS_KEY
-              value: "test"
+              value: "test"  # Credencial fictícia para LocalStack
             - name: AWS_REGION
-              value: "us-east-1"
+              value: "us-east-1"  # Define uma região padrão (mesmo que LocalStack não precise)
+
       volumes:
         - name: varlog
           hostPath:
-            path: /var/log
+            path: /var/log  # Monta os logs do host no pod, permitindo que o Fluent Bit os colete
         - name: config-volume
           configMap:
-            name: fluent-bit-config
+            name: fluent-bit-config  # Usa o ConfigMap do Fluent Bit para carregar suas configurações

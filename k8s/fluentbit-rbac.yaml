@@ -1,35 +1,38 @@
+# 📌 Cria uma ServiceAccount para o CronJob que monitora os logs e reinicia o Fluent Bit, caso necessário.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: fluentbit-check-sa
-  namespace: default
+  name: fluentbit-check-sa  # Nome da ServiceAccount
+  namespace: default  # Define que essa ServiceAccount será criada no namespace 'default'
 
 ---
+# 📌 Cria uma Role que define as permissões que a ServiceAccount pode executar no cluster.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: fluentbit-check-role
-  namespace: default
+  name: fluentbit-check-role  # Nome da Role que define as permissões do CronJob
+  namespace: default  # Aplica a Role no namespace 'default'
 rules:
   - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "list", "update", "patch"]
+    resources: ["deployments"]  # Permite acesso aos Deployments
+    verbs: ["get", "list", "update", "patch"]  # Permite visualizar, listar e reiniciar os deployments (rollout restart)
 
   - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list"]
+    resources: ["pods"]  # Permite acesso aos Pods
+    verbs: ["get", "list"]  # Permite visualizar e listar os pods (para verificar status)
 
 ---
+# 📌 Cria um RoleBinding que associa a ServiceAccount `fluentbit-check-sa` à Role `fluentbit-check-role`
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: fluentbit-check-rolebinding
-  namespace: default
+  name: fluentbit-check-rolebinding  # Nome do RoleBinding
+  namespace: default  # Aplica a associação no namespace 'default'
 subjects:
   - kind: ServiceAccount
-    name: fluentbit-check-sa
-    namespace: default
+    name: fluentbit-check-sa  # Associa essa ServiceAccount às permissões definidas na Role
+    namespace: default  # Confirma que está no mesmo namespace 'default'
 roleRef:
   kind: Role
-  name: fluentbit-check-role
-  apiGroup: rbac.authorization.k8s.io
+  name: fluentbit-check-role  # Nome da Role que será aplicada à ServiceAccount
+  apiGroup: rbac.authorization.k8s.io  # Define que essa Role pertence ao grupo RBAC do Kubernetes
