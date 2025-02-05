@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: check-fluentbit-logs
+spec:
+  schedule: "*/5 * * * *"  # Roda a cada 5 minutos
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: log-checker
+            image: bitnami/aws-cli  # Usa uma imagem que já vem com kubectl e AWS CLI
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "🔍 Verificando logs no S3 do LocalStack..."
+
+              export AWS_ACCESS_KEY_ID=test
+              export AWS_SECRET_ACCESS_KEY=test
+              export AWS_DEFAULT_REGION=us-east-1
+
+              ENDPOINT="http://host.docker.internal:4566"
+              BUCKET="log-bucket"
+              FLUENTBIT_LABEL="app=fluent-bit"
+
+              LAST_LOG_TIME=$(aws --endpoint-url=$ENDPOINT s3 ls s3://$BUCKET/ --recursive | awk '{print $1, $2}' | sort | tail -n 1)
+
+              if [ -z "$LAST_LOG_TIME" ]; then
+                  echo "🚨 Nenhum log encontrado no bucket! Reiniciando Fluent Bit..."
+                  kubectl rollout restart deployment -l $FLUENTBIT_LABEL
+              else
+                  echo "✅ Último log encontrado em: $LAST_LOG_TIME"
+              fi
+            env:
+              - name: AWS_ACCESS_KEY_ID
+                value: "test"
+              - name: AWS_SECRET_ACCESS_KEY
+                value: "test"
+              - name: AWS_DEFAULT_REGION
+                value: "us-east-1"
+          restartPolicy: OnFailure
+          serviceAccountName: fluentbit-check-sa

@@ -19,6 +19,8 @@ k8s_app_fluentbit_s3/
 │   ├── fluent-bit-deployment.yaml # Deployment do Fluent Bit
 │   ├── kind.yaml                 # Configuração do cluster Kind
 │   ├── log_generator.py          # Script gerador de logs
+│   ├── check-fluentbit-cronjob.yaml # CronJob para monitorar os logs e reiniciar Fluent Bit se necessário
+│   ├── fluentbit-rbac.yaml       # Permissões RBAC para o CronJob
 │
 ├── localstack/
 │   ├── volume/                   # Diretório de volume persistente
@@ -147,7 +149,42 @@ kubectl logs -l app=fluent-bit --tail=50 -f
 
 ---
 
-### **Passo 6: Verificar se os Logs Foram Enviados para o LocalStack**
+### **Passo 6: Configurar o Monitoramento Automático do Fluent Bit**
+Para garantir que os logs estão sendo enviados continuamente ao LocalStack, criamos um **CronJob Kubernetes** que monitora o bucket do S3 e reinicia o Fluent Bit caso os logs parem de ser enviados.
+
+#### **Criar as permissões RBAC para o CronJob**
+```sh
+kubectl apply -f k8s/fluentbit-rbac.yaml
+```
+
+#### **Aplicar o CronJob**
+```sh
+kubectl apply -f k8s/check-fluentbit-cronjob.yaml
+```
+
+#### **Verificar se o CronJob foi criado**
+```sh
+kubectl get cronjobs
+```
+
+#### **Rodar o CronJob manualmente para teste**
+```sh
+kubectl create job --from=cronjob/check-fluentbit-logs check-fluentbit-manual
+```
+
+#### **Verificar os logs do CronJob**
+```sh
+kubectl logs -l job-name=check-fluentbit-manual --tail=50
+```
+
+### **Resumo**
+- **O CronJob monitora o bucket do S3 a cada 5 minutos** e verifica se há logs recentes.
+- **Se os logs pararem de ser enviados, ele reinicia o Fluent Bit automaticamente.**
+- **O RBAC garante que o CronJob tenha permissões para rodar `kubectl rollout restart` no Fluent Bit.**
+
+---
+
+## **7️⃣ Verificar se os Logs Foram Enviados para o LocalStack**
 Agora, vamos verificar se os logs chegaram ao S3 do LocalStack:
 
 ```sh
@@ -166,15 +203,12 @@ cat <nome-do-arquivo>
 
 ---
 
-## **7️⃣ Conclusão**
+## **8️⃣ Conclusão**
 Agora temos um ambiente funcionando onde:
 ✅ A aplicação gera logs.
 ✅ O Fluent Bit captura os logs.
 ✅ Os logs são enviados para o LocalStack simulando um bucket S3.
-✅ Podemos consultar os logs no LocalStack.
+✅ O CronJob monitora e reinicia o Fluent Bit caso os logs parem de ser enviados.
 
-Se precisar depurar algo, verifique os logs do Fluent Bit e da aplicação! 🚀🔥
+Se precisar depurar algo, verifique os logs do Fluent Bit, da aplicação e do CronJob! 🚀🔥
 
-Se tiver dúvidas ou quiser melhorar algo, contribua com PRs! 😊
-
-# k8s_app_fluentbit_s3
